@@ -1,3 +1,53 @@
+type DemandPlan = 
+    record {
+        identity:text;
+        id: nat32;
+        name: text;
+        description: text;
+        customer_group: text;
+        amount: nat64;
+        unit: Unit;
+        created_date:text;
+        from :Time;
+        to : Time;
+        // period: Period;
+        // target_year:text;
+    };
+
+type Unit = variant {
+    Kg;
+    Tonne;
+    Piece;
+};
+type Period = variant {
+    Q1;
+    Q2;
+    Q3;
+    Q4;
+    Yearly;
+    Monthly;
+    Weekly;
+    Daily;
+};
+
+type Time = record{
+    year:nat16;
+    month:nat8;
+    date:nat8;
+    hour:nat8;
+    minute:nat8;
+    formatted:text;
+
+};
+
 service : {
     "greet": (text) -> (text) query;
+    "add_demand_plan": (DemandPlan) -> (opt bool);
+    "get_all_demand_plans": () -> (vec DemandPlan) query;
+    "update_demand_plan": (DemandPlan) -> (opt bool);
+    "get_demand_plans_by_name": (text) -> (vec DemandPlan) query;
+    "get_demand_plans_by_customer_group": (text) -> (vec DemandPlan) query;
+    "get_demand_plans_by_year_range": (nat16,nat16) -> (vec DemandPlan) query;
+    "delete_demand_plan" : (nat32) -> (bool)
+    // "get_all_demand_plans2": () -> (vec DemandPlan) query;
 }

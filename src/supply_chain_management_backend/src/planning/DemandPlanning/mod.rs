@@ -16,6 +16,7 @@
 //3. Production planning
 // use chrono::{DateTime, TimeZone, Utc};
 // use chrono::prelude::*;
+mod demand_plan;
 use ic_cdk::call;
 use std::borrow::{BorrowMut, Cow};
 use std::cell::RefCell;
@@ -30,36 +31,16 @@ use ic_cdk::api::management_canister::http_request::{
     http_request, CanisterHttpRequestArgument, HttpHeader, HttpMethod,
 };
 use rand::{CryptoRng, RngCore, SeedableRng};
+use self::demand_plan::DemandPlan;
+
 use super::idgenerator;
+use crate::entities;
+use crate::entities::time::Time;
+use crate::entities::unit::Unit;
 
 
-#[derive(CandidType, Deserialize, Clone)]
-struct DemandPlan{
-    identity:String,
-    id:u32,
-    name:String,//product name
-    description:String, //product description
-    customer_group:String, //corporate,foundation,government,hospitality,education,individual
-    amount: u64,
-    unit: Unit,
-    created_date:String,
-    from:Time,
-    to:Time,
-    // target_year:String,
-    // period:Period,
 
-}
 
-#[derive(CandidType, Deserialize, Clone)]
-struct Time{
-    year:u16,
-    month:u8,
-    date:u8,
-    hour:u8,
-    minute:u8,
-    formatted:String,
-
-}
 // //memory definition
 // type Memory = VirtualMemory<DefaultMemoryImpl>;
 // const MAX_VALUE_SIZE: u32 = 1024;
@@ -181,9 +162,9 @@ pub fn get_demand_plans_by_year_range(from:u16,to:u16) -> Vec< DemandPlan> {
     return data;
 }
 
-#[ic_cdk::query]
+#[ic_cdk::update]
 pub fn delete_demand_plan(_id:u32) -> bool {
-    let result = DEMAND_PLAN_MAP.with(|p| p.borrow_mut().to_owned().remove_entry(&_id));
+    let result = DEMAND_PLAN_MAP.with(|p| p.borrow_mut().remove(&_id));
     match result {
         Some(data) =>true,
         None => false
@@ -192,20 +173,8 @@ pub fn delete_demand_plan(_id:u32) -> bool {
 
 
 
-#[derive(CandidType, Deserialize, Clone)]
-enum Unit{
-    Kg,
-    Tonne,
-    Piece,
 
-}
-enum UrgencyLevel{
-    Lowest,
-    Low,
-    Medium,
-    High,
-    Critical,
-}
+
 
 #[derive(CandidType, Deserialize, Clone)]
 enum Period{

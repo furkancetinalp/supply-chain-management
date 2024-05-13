@@ -1,17 +1,24 @@
 
+use candid::{CandidType, Decode, Deserialize, Encode, Principal};
+
+use crate::entities::{time::Time, unit::Unit, urgency::Urgency};
+
+
 #[derive(CandidType, Deserialize, Clone)]
 struct RawMaterial{
-    identity:String, //identity of company/user
+    identity:Principal,
     id:u32,
-    name:String,//product name
-    description:String, //product description
-    customer_group:String, //corporate,foundation,government,hospitality,education,individual
-    amount: u64,
+
+    name:String,
+    description:String,
+    amount: f64,
     unit: Unit,
-    created_date:String,
+
     from:Time,
     to:Time,
-    // target_year:String,
-    // period:Period,
+    urgency:Urgency,
+    warehouse_name:String,
+
+    created_date:String,
 
 }

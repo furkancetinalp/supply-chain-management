@@ -16,7 +16,7 @@
 //3. Production planning
 // use chrono::{DateTime, TimeZone, Utc};
 // use chrono::prelude::*;
-mod demand_plan;
+pub(crate) mod demand;
 use ic_cdk::call;
 use std::borrow::{BorrowMut, Cow};
 use std::cell::RefCell;
@@ -31,66 +31,44 @@ use ic_cdk::api::management_canister::http_request::{
     http_request, CanisterHttpRequestArgument, HttpHeader, HttpMethod,
 };
 use rand::{CryptoRng, RngCore, SeedableRng};
-use self::demand_plan::DemandPlan;
+use self::demand::{Demand, DemandRequest};
 
 use super::idgenerator;
+use crate::context::DEMAND_PLAN_MAP;
 use crate::entities;
 use crate::entities::time::Time;
 use crate::entities::unit::Unit;
 
 
 
-
-// //memory definition
-// type Memory = VirtualMemory<DefaultMemoryImpl>;
-// const MAX_VALUE_SIZE: u32 = 1024;
-
-// impl Storable for DemandPlan {
-//     fn to_bytes(&self) -> std::borrow::Cow<[u8]> {
-//         Cow::Owned(Encode!(self).unwrap())
-//     }
-
-//     fn from_bytes(bytes: std::borrow::Cow<[u8]>) -> Self {
-//         Decode!(bytes.as_ref(), Self).unwrap()
-//     }
-// }
-
-// impl BoundedStorable for DemandPlan {
-//     const MAX_SIZE: u32 = MAX_VALUE_SIZE;
-//     const IS_FIXED_SIZE: bool = false;
-// }
-
-
-
-// Creating memory manager with a new MemoryId
-thread_local! {
-    static MEMORY_MANAGER: RefCell<MemoryManager<DefaultMemoryImpl>> =
-    RefCell::new(MemoryManager::init(DefaultMemoryImpl::default()));
-
-    static DEMAND_PLAN_MAP: RefCell<HashMap<u32, DemandPlan>> = RefCell::default();
-
-}
-
-
-
 //ADD DEMAND
 #[ic_cdk::update]
- pub async fn add_demand_plan(mut demand: DemandPlan) -> Option<bool> {
+ pub async fn add_demand_plan(mut request: DemandRequest) -> Option<bool> {
     let created_date = ic_cdk::api::time().to_string();
-    
     let unique_id:u32 = idgenerator::create_id().await;
-    demand.id = unique_id;
-    demand.created_date=created_date;
+
     let user_id = ic_cdk::caller();
-    demand.identity=user_id.to_string();
-    DEMAND_PLAN_MAP.with(|p| p.borrow_mut().insert(unique_id, demand));
+    request.identity=user_id.to_string();
+    let data = Demand{
+        id:unique_id,
+        identity:user_id.to_string(),
+        description:request.description,
+        name:request.name,
+        customer_group:request.customer_group,
+        amount:request.amount,
+        unit:request.unit,
+        created_date:created_date,
+        from:request.from,
+        to:request.to,
+    };
+    DEMAND_PLAN_MAP.with(|p| p.borrow_mut().insert(unique_id, data));
     return Some(true);
 }
 
 //GET ALL
 #[ic_cdk::query]
-pub fn get_all_demand_plans() -> Vec< DemandPlan> {
-    let data: Vec<DemandPlan> = DEMAND_PLAN_MAP.with(|demands| {
+pub fn get_all_demand_plans() -> Vec< Demand> {
+    let data: Vec<Demand> = DEMAND_PLAN_MAP.with(|demands| {
         let binding = demands.borrow();
         let filter = binding.iter().filter(|& x| x.1.identity == ic_cdk::caller().to_string()).collect::<Vec<_>>();
         let result = filter.iter().map(|x| x.1.clone()).collect::<Vec<_>>();
@@ -104,12 +82,12 @@ pub fn get_all_demand_plans() -> Vec< DemandPlan> {
 
     // let result = data.iter().map(|x| x.1.clone()).collect::<Vec<_>>();
     // return result;
-    // let response:Vec<_> =   DEMAND_PLAN_MAP.with(|p| p.borrow().iter().map(|x: (u32, DemandPlan)| x.1).collect());
+    // let response:Vec<_> =   DEMAND_PLAN_MAP.with(|p| p.borrow().iter().map(|x: (u32, Demand)| x.1).collect());
 }
 
 //UPDATE
 #[ic_cdk::update]
- pub async fn update_demand_plan(mut demand: DemandPlan) -> Option<bool> {
+ pub async fn update_demand_plan(mut demand: Demand) -> Option<bool> {
     let created_date = ic_cdk::api::time().to_string();
     
     demand.created_date=created_date;
@@ -121,8 +99,8 @@ pub fn get_all_demand_plans() -> Vec< DemandPlan> {
 
 
 #[ic_cdk::query]
-pub fn get_demand_plans_by_name(name:String) -> Vec< DemandPlan> {
-    let data: Vec<DemandPlan> = DEMAND_PLAN_MAP.with(|demands| {
+pub fn get_demand_plans_by_name(name:String) -> Vec< Demand> {
+    let data: Vec<Demand> = DEMAND_PLAN_MAP.with(|demands| {
         let binding = demands.borrow();
         let filter = binding.iter()
         .filter(|& x| x.1.identity == ic_cdk::caller().to_string() && x.1.name.to_lowercase()==name.to_lowercase()).collect::<Vec<_>>();
@@ -133,8 +111,8 @@ pub fn get_demand_plans_by_name(name:String) -> Vec< DemandPlan> {
 }
 
 #[ic_cdk::query]
-pub fn get_demand_plans_by_customer_group(customer_group:String) -> Vec< DemandPlan> {
-    let data: Vec<DemandPlan> = DEMAND_PLAN_MAP.with(|demands| {
+pub fn get_demand_plans_by_customer_group(customer_group:String) -> Vec< Demand> {
+    let data: Vec<Demand> = DEMAND_PLAN_MAP.with(|demands| {
         let binding = demands.borrow();
 
         let filter = binding.iter()
@@ -148,8 +126,8 @@ pub fn get_demand_plans_by_customer_group(customer_group:String) -> Vec< DemandP
 }
 
 #[ic_cdk::query]
-pub fn get_demand_plans_by_year_range(from:u16,to:u16) -> Vec< DemandPlan> {
-    let data: Vec<DemandPlan> = DEMAND_PLAN_MAP.with(|demands| {
+pub fn get_demand_plans_by_year_range(from:u16,to:u16) -> Vec< Demand> {
+    let data: Vec<Demand> = DEMAND_PLAN_MAP.with(|demands| {
         let binding = demands.borrow();
         
         let filter = binding.iter()

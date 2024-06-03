@@ -1,19 +1,3 @@
-type DemandPlan = 
-    record {
-        identity:text;
-        id: nat32;
-        name: text;
-        description: text;
-        customer_group: text;
-        amount: nat64;
-        unit: Unit;
-        created_date:text;
-        from :Time;
-        to : Time;
-        // period: Period;
-        // target_year:text;
-    };
-
 type Unit = variant {
     Kg;
     Tonne;
@@ -30,6 +14,14 @@ type Period = variant {
     Daily;
 };
 
+type Urgency = variant {
+    Lowest;
+    Low;
+    Medium;
+    High;
+    Critical;
+};
+
 type Time = record{
     year:nat16;
     month:nat8;
@@ -40,14 +32,65 @@ type Time = record{
 
 };
 
+// DEMAND PLAN
+type DemandPlan = 
+    record {
+        identity:text;
+        id: nat32;
+        name: text;
+        description: text;
+        customer_group: text;
+        amount: float64;
+        unit: Unit;
+        created_date:text;
+        from :Time;
+        to : Time;
+        // period: Period;
+        // target_year:text;
+    };
+
+//RAW MATERIAL PLANNING
+type RawMaterial = 
+    record {
+        identity:text;
+        id: nat32;
+
+        name: text;
+        description: text;
+        amount: float64;
+        unit: Unit;
+        
+        from :Time;
+        to : Time;
+        urgency: Urgency;
+        warehouse_name:text;
+
+        requested_delivery_time:nat8;
+        created_date:text;
+        // period: Period;
+        // target_year:text;
+    };
+
+
 service : {
-    "greet": (text) -> (text) query;
-    "add_demand_plan": (DemandPlan) -> (opt bool);
-    "get_all_demand_plans": () -> (vec DemandPlan) query;
-    "update_demand_plan": (DemandPlan) -> (opt bool);
-    "get_demand_plans_by_name": (text) -> (vec DemandPlan) query;
-    "get_demand_plans_by_customer_group": (text) -> (vec DemandPlan) query;
-    "get_demand_plans_by_year_range": (nat16,nat16) -> (vec DemandPlan) query;
-    "delete_demand_plan" : (nat32) -> (bool)
-    // "get_all_demand_plans2": () -> (vec DemandPlan) query;
+    // ** PLANNING **
+    //1. DEMAND PLANNING
+    "add_demand_plan": (DemandRequest) -> (opt bool);
+    "get_all_demand_plans": () -> (vec Demand) query;
+    "update_demand_plan": (Demand) -> (opt bool);
+    "get_demand_plans_by_name": (text) -> (vec Demand) query;
+    "get_demand_plans_by_customer_group": (text) -> (vec Demand) query;
+    "get_demand_plans_by_year_range": (nat16,nat16) -> (vec Demand) query;
+    "delete_demand_plan" : (nat32) -> (bool);
+
+    //2 RAW MATERIAL PLANNING
+    "add_raw_material_plan": (RawMaterial) -> (opt bool);
+    "get_all_raw_material_plans": () -> (vec RawMaterial) query;
+    "update_raw_material_plan": (RawMaterial) -> (opt bool);
+
+
+
+
+
+
 }

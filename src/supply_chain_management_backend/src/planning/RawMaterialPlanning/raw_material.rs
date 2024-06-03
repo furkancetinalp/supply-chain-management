@@ -1,24 +1,38 @@
 
-use candid::{CandidType, Decode, Deserialize, Encode, Principal};
-
+use candid::{CandidType, Deserialize, Principal};
 use crate::entities::{time::Time, unit::Unit, urgency::Urgency};
+
+#[derive(CandidType, Deserialize, Clone)]
+pub(crate) struct RawMaterial{
+    pub id:u32,
+    pub identity:String,
+    pub name:String,
+    pub description:String,
+    pub amount: f64,
+    pub unit: Unit,
+    pub from:Time,
+    pub to:Time,
+    pub urgency:Urgency,
+    pub warehouse_name:String, //warehouseId olarak değişmeli
+    pub requested_delivery_time:u8, //required date to be delivered
+    pub created_date:String,
+
+}
 
 
 #[derive(CandidType, Deserialize, Clone)]
-struct RawMaterial{
-    identity:Principal,
-    id:u32,
-
-    name:String,
-    description:String,
-    amount: f64,
-    unit: Unit,
-
-    from:Time,
-    to:Time,
-    urgency:Urgency,
-    warehouse_name:String,
-
-    created_date:String,
+pub(crate) struct RawMaterialRequest{
+    // pub id:u32,
+    // pub identity:String,
+    pub name:String,
+    pub description:String,
+    pub amount: f64,
+    pub unit: Unit,
+    pub from:Time,
+    pub to:Time,
+    pub urgency:Urgency,
+    pub warehouse_name:String, //warehouseId olarak değişmeli
+    pub requested_delivery_time:u8, //required date to be delivered
+    // pub created_date:String,
 
 }
